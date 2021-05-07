@@ -1,7 +1,7 @@
 #	[eBPF](https://ebpf.io/) introduction
 titanxxh@gmail.com
 --
-kubecon 2020 eBPF 相关session
+kubecon 2020 eBPF 相关 session
 -	Beyond the Buzzword BPF’s Unexpected Role in Kubernetes
 -	Designing a gRPC Interface for Kernel Tracing with eBPF
 -	<span class="fragment highlight-blue">eBPF and Kubernetes Little Helper Minions for Scaling Microservices —— Cilium</span>
@@ -35,9 +35,11 @@ maximum instruction limit per eBPF program is restricted to <span class="fragmen
 -	支持 BPF offload（例如 offload 到网卡）的基础设施
 -	...
 --
-![](images/linux_ebpf_internals.png)
+![arch](assets/ebpf-01-arch.png)
+[BPF: Tracing and More, p5](http://www.brendangregg.com/Slides/LCA2017_BPF_tracing_and_more.pdf)
 --
-![eBPF hooks](images/eBPF hooks.png)
+![eBPF hooks](assets/ebpf-02-hooks.png)
+[eBPF - Rethinking the Linux Kernel, p11](https://www.infoq.com/presentations/facebook-google-bpf-linux-kernel/)
 --
 Trivia
 
@@ -58,8 +60,6 @@ what can eBPF do?
 ---
 replace netfilter/iptables
 --
-![iptables](images/hooks-and-tables.png)
---
 iptables的问题:
 -	只能全量更新
 -	O(n)复杂度的rules应用
@@ -70,11 +70,14 @@ even worse in K8S
 -	kube-proxy - the component which implements Services and load balancing by DNAT iptables rules
 -	the most of CNI plugins are using iptables for Network Policies
 --
-![](images/flow-iptables.png)
+![Packet flow for kube-proxy](assets/ebpf-04-flow-kube-proxy.png)
+[eBPF and Kubernetes Little Helper Minions for Scaling Microservices, p28](https://static.sched.com/hosted_files/kccnceu20/8f/Aug19_eBPF_and_Kubernetes_Little_Helper_Minions_for_Scaling_Microservices_Daniel_Borkmann.pdf)
 --
-![](images/flow-local.png)
+![Packet flow for eBPF](assets/ebpf-05-flow-ebpf-local.png)
+[eBPF and Kubernetes Little Helper Minions for Scaling Microservices, p30](https://static.sched.com/hosted_files/kccnceu20/8f/Aug19_eBPF_and_Kubernetes_Little_Helper_Minions_for_Scaling_Microservices_Daniel_Borkmann.pdf)
 --
-![](images/flow-forward.png)
+![Packet flow for eBPF forward](assets/ebpf-06-flow-ebpf-forward.png)
+[eBPF and Kubernetes Little Helper Minions for Scaling Microservices, p32](https://static.sched.com/hosted_files/kccnceu20/8f/Aug19_eBPF_and_Kubernetes_Little_Helper_Minions_for_Scaling_Microservices_Daniel_Borkmann.pdf)
 
 --
 how eBPF solve this?
@@ -88,13 +91,16 @@ extended readings
 ---
 accelerate sidecar
 --
-![sidecar without eBPF](images/sidecar no eBPF.png)<!-- .element height="80%" width="80%" -->
+![sidecar without eBPF](assets/ebpf-08-sidecar-without.png)
+[Accelerating Envoy and Istio with Cilium and the Linux Kernel, p20](https://static.sched.com/hosted_files/kccnceu18/d9/2018%20KubeCon%20EU%20Cilium%20-%20Accelerating%20Envoy.pdf)
 --
-![sidecar with eBPF](images/sidecar eBPF.png)<!-- .element height="80%" width="80%" -->
+![sidecar with eBPF](assets/ebpf-09-sidecar-with.png)
+[Accelerating Envoy and Istio with Cilium and the Linux Kernel, p22](https://static.sched.com/hosted_files/kccnceu18/d9/2018%20KubeCon%20EU%20Cilium%20-%20Accelerating%20Envoy.pdf)
 ---
 Cilium's service LB
 --
-![Cilium's service load balancing](images/cilium.png)
+![Cilium's service load balancing](assets/ebpf-07-cilium-lb.png)
+[eBPF and Kubernetes Little Helper Minions for Scaling Microservices, p85](https://static.sched.com/hosted_files/kccnceu20/8f/Aug19_eBPF_and_Kubernetes_Little_Helper_Minions_for_Scaling_Microservices_Daniel_Borkmann.pdf)
 --
 东西向流量在Socket层的BPF处理
 -	将 Service 的 `IP:Port` 映射到具体的后端的 `PodIP:Port`，并做负载均衡。
@@ -108,12 +114,6 @@ Cilium's service LB
 --
 -	将东西向流量放在离 socket 层尽量近的地方做。
 -	将南北向流量放在离驱动（XDP 和 tc）层尽量近的地方做。
---
-![](images/perf1.png)
---
-![](images/perf2.png)
---
-![](images/perf3.png)
 
 Note:
 kube-proxy 不管是 iptables 还是 ipvs 模式，都在处理软中断上消耗了大量 CPU。
@@ -127,13 +127,8 @@ bcc & bpftrace
 -	python程序，用户态运行，收集数据输出。
 -	c程序会编译后加载到kernel中，收集event或者写入map。
 --
-![](images/bcc.png)
---
 bcc tools
-![](images/bcc_tracing_tools_2019.png)
---
-![](images/execnoop.png)
-![](images/uvp.png)
+![bcc_tracing_tools_2019](https://raw.githubusercontent.com/iovisor/bcc/master/images/bcc_tracing_tools_2019.png)
 --
 [off-cpu analysis](http://www.brendangregg.com/offcpuanalysis.html)
 
@@ -145,11 +140,10 @@ where time is spent waiting while blocked on I/O, locks, timers, paging/swapping
 
 ![](http://www.brendangregg.com/FlameGraphs/offwake-mysqld1.png)<!-- .element height="50%" width="50%" -->
 --
-![](images/ebpf_tracing_landscape_jan2019.png)
+![ebpf_tracing_landscape_jan2019](http://www.brendangregg.com/eBPF/ebpf_tracing_landscape_jan2019.png)
 --
-bpftrace probe types
-
-![](images/bpftrace_probes_2018.png)<!-- .element height="80%" width="80%" -->
+bpftrace probes
+![bpftrace_probes_2018](https://raw.githubusercontent.com/iovisor/bpftrace/master/images/bpftrace_probes_2018.png)<!-- .element height="80%" width="80%" -->
 --
 extended readings
 -	[Linux Extended BPF (eBPF) Tracing Tools](http://www.brendangregg.com/ebpf.html)
@@ -160,4 +154,4 @@ extended readings
 ---
 ## Thanks!
 --
-<!-- .slide: data-background-image="images/replace-linux.png" -->
+<!-- .slide: data-background-image="assets/ebpf-10-replace-linux.png" -->
